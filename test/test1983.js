@@ -6,11 +6,10 @@ if (typeof exports === 'object') {
 const test = '1983'; // insert test file number
 
 describe('Test 1983 - multiple statements', function () {
-
 	before(function () {
 		alasql('create database test' + test);
 		alasql('use test' + test);
-		alasql('CREATE TABLE a (anything string);')
+		alasql('CREATE TABLE a (anything string);');
 	});
 
 	after(function () {

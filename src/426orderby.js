@@ -35,6 +35,11 @@ yy.Select.prototype.compileOrder = function (query, params) {
 			// console.log(ord.expression instanceof yy.Column);
 
 			if (ord.expression instanceof yy.NumValue) {
+				if (ord.expression.value > self.columns.length) {
+					throw new Error(
+						`You are trying to order by column number ${ord.expression.value} but you have only selected ${self.columns.length} columns.`
+					);
+				}
 				var v = self.columns[ord.expression.value - 1];
 			} else {
 				var v = ord.expression;
@@ -48,27 +53,37 @@ yy.Select.prototype.compileOrder = function (query, params) {
 			//if(alasql.options.valueof)
 			if (ord.expression instanceof yy.Column) {
 				var columnid = ord.expression.columnid;
-				if (query.xcolumns[columnid]) {
+				if (alasql.options.valueof) {
+					dg = '.valueOf()';
+				} else if (query.xcolumns[columnid]) {
 					var dbtypeid = query.xcolumns[columnid].dbtypeid;
-					if (dbtypeid == 'DATE' || dbtypeid == 'DATETIME' || dbtypeid == 'DATETIME2')
+					if (
+						dbtypeid == 'DATE' ||
+						dbtypeid == 'DATETIME' ||
+						dbtypeid == 'DATETIME2' ||
+						dbtypeid == 'STRING' ||
+						dbtypeid == 'NUMBER'
+					)
 						dg = '.valueOf()';
 					// TODO Add other types mapping
-				} else {
-					if (alasql.options.valueof) dg = '.valueOf()'; // TODO Check
 				}
-				//				dg = '.valueOf()';
 			}
 			if (ord.expression instanceof yy.ParamValue) {
 				var columnid = params[ord.expression.param];
-				if (query.xcolumns[columnid]) {
+				if (alasql.options.valueof) {
+					dg = '.valueOf()';
+				} else if (query.xcolumns[columnid]) {
 					var dbtypeid = query.xcolumns[columnid].dbtypeid;
-					if (dbtypeid == 'DATE' || dbtypeid == 'DATETIME' || dbtypeid == 'DATETIME2')
+					if (
+						dbtypeid == 'DATE' ||
+						dbtypeid == 'DATETIME' ||
+						dbtypeid == 'DATETIME2' ||
+						dbtypeid == 'STRING' ||
+						dbtypeid == 'NUMBER'
+					)
 						dg = '.valueOf()';
 					// TODO Add other types mapping
-				} else {
-					if (alasql.options.valueof) dg = '.valueOf()'; // TODO Check
 				}
-				//				dg = '.valueOf()';
 			}
 			// COLLATE NOCASE
 			if (ord.nocase) dg += '.toUpperCase()';

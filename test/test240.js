@@ -7,14 +7,15 @@ if (typeof exports === 'object') {
 
 if (typeof exports == 'object') {
 	var DOMStorage = require('dom-storage');
-	global.localStorage = new DOMStorage('./test239.json', {strict: false, ws: ''});
+	global.localStorage = new DOMStorage('./test239.json', {
+		strict: false,
+		ws: '',
+	});
 }
 
 describe('Test 240 DELETE TEST', function () {
 	it('1. Create dtabase', function (done) {
-		alasql(function () {
-			/*
-
+		alasql(`
     SET AUTOCOMMIT OFF;
     DROP localStorage DATABASE IF EXISTS ls240;
     CREATE localStorage DATABASE IF NOT EXISTS ls240;
@@ -25,8 +26,7 @@ describe('Test 240 DELETE TEST', function () {
     
     INSERT INTO one VALUES (1,"Moscow"), (2, "Kyiv"), (3,"Minsk");
     
-    */
-		});
+    `);
 
 		var res = alasql('SELECT * FROM one');
 		assert.deepEqual(res, [
@@ -47,7 +47,7 @@ describe('Test 240 DELETE TEST', function () {
 
 		alasql('DELETE FROM one WHERE 1=1');
 
-		var res = alasql('SELECT * FROM one');
+		res = alasql('SELECT * FROM one');
 		assert.deepEqual(res, []);
 
 		//	console.log(res);

@@ -7,7 +7,7 @@
 */
 
 yy.DropTable = function (params) {
-	return yy.extend(this, params);
+	return Object.assign(this, params);
 };
 yy.DropTable.prototype.toString = function () {
 	var s = 'DROP' + ' ';
@@ -47,7 +47,9 @@ yy.DropTable.prototype.execute = function (databaseid, params, cb) {
 			if (!db.tables[tableid]) {
 				if (!alasql.options.dropifnotexists) {
 					throw new Error(
-						"Can not drop table '" + table.tableid + "', because it does not exist in the database."
+						`Can not drop table ${JSON.stringify(
+							table.tableid
+						)} because it does not exist in the database.`
 					);
 				}
 			} else {
@@ -80,7 +82,7 @@ yy.DropTable.prototype.execute = function (databaseid, params, cb) {
 };
 
 yy.TruncateTable = function (params) {
-	return yy.extend(this, params);
+	return Object.assign(this, params);
 };
 yy.TruncateTable.prototype.toString = function () {
 	var s = 'TRUNCATE TABLE';

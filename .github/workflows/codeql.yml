@@ -1,0 +1,49 @@
+name: 'CodeQL'
+
+on:
+  push:
+    branches: ['develop']
+  pull_request:
+    branches: ['develop']
+  schedule:
+    - cron: '32 13 * * 0'
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    name: Analyze
+    runs-on: ${{ (matrix.language == 'swift' && 'macos-latest') || 'blacksmith-4vcpu-ubuntu-2204' }}
+    timeout-minutes: ${{ (matrix.language == 'swift' && 120) || 360 }}
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ['javascript']
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@cb605e52c26070c328afc4562f0b4ada7618a84e
+        with:
+          egress-policy: audit
+
+      - name: Checkout repository
+        uses: actions/checkout@cbb722410c2e876e24abbe8de2cc27693e501dcb
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@db7177a1c66bea89f5e7ce32d0ea48bea4a0d460
+        with:
+          languages: ${{ matrix.language }}
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@db7177a1c66bea89f5e7ce32d0ea48bea4a0d460
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@db7177a1c66bea89f5e7ce32d0ea48bea4a0d460
+        with:
+          category: '/language:${{ matrix.language }}'

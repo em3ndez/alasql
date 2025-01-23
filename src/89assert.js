@@ -7,7 +7,7 @@
 */
 
 yy.Assert = function (params) {
-	return yy.extend(this, params);
+	return Object.assign(this, params);
 };
 yy.Source.prototype.toString = function () {
 	var s = 'ASSERT';
@@ -17,11 +17,7 @@ yy.Source.prototype.toString = function () {
 
 // SOURCE FILE
 yy.Assert.prototype.execute = function (databaseid) {
-	//	console.log(alasql.res, this.value);
 	if (!deepEqual(alasql.res, this.value)) {
-		//		if(this.message) {
-		//			throw this.
-		//		} else {
 		throw new Error(
 			(this.message || 'Assert wrong') +
 				': ' +
@@ -29,7 +25,6 @@ yy.Assert.prototype.execute = function (databaseid) {
 				' == ' +
 				JSON.stringify(this.value)
 		);
-		//		}
 	}
 	return 1;
 };

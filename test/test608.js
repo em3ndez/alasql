@@ -3,21 +3,17 @@ if (typeof exports === 'object') {
 	var alasql = require('..');
 }
 
-var test = '608'; // insert test file number
-
-describe('Test ' + test + ' - Select.toString() ', function () {
+describe('Test 608 - Select.toString() ', function () {
 	// From http://jsfiddle.net/ndxbxrme/eyLy4zy9/3/
 
 	var tests = [
 		{
 			description: '1: Alias ommited from table join',
-			sql:
-				'SELECT i.name AS itemName, f.name FROM items AS i LEFT JOIN feeds AS f ON i.fid = f.id WHERE f.id = $0',
+			sql: 'SELECT i.name AS itemName, f.name FROM items AS i LEFT JOIN feeds AS f ON i.fid = f.id WHERE f.id = $0',
 		},
 		{
 			description: '2: Joined Select',
-			sql:
-				'SELECT i.name AS itemName, f.name FROM items AS i LEFT JOIN (SELECT * FROM feeds) AS f ON i.fid = f.id WHERE f.id = $0',
+			sql: 'SELECT i.name AS itemName, f.name FROM items AS i LEFT JOIN (SELECT * FROM feeds) AS f ON i.fid = f.id WHERE f.id = $0',
 		},
 		{
 			description: '3: Distinct goes missing',

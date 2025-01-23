@@ -7,7 +7,7 @@
 */
 
 yy.WithSelect = function (params) {
-	return yy.extend(this, params);
+	return Object.assign(this, params);
 };
 yy.WithSelect.prototype.toString = function () {
 	var s = 'WITH ';
@@ -27,7 +27,9 @@ yy.WithSelect.prototype.execute = function (databaseid, params, cb) {
 	var savedTables = [];
 	self.withs.forEach(function (w) {
 		savedTables.push(alasql.databases[databaseid].tables[w.name]);
-		var tb = (alasql.databases[databaseid].tables[w.name] = new Table({tableid: w.name}));
+		var tb = (alasql.databases[databaseid].tables[w.name] = new Table({
+			tableid: w.name,
+		}));
 		tb.data = w.select.execute(databaseid, params);
 	});
 
@@ -62,7 +64,7 @@ yy.CreateView.prototype.execute = function (databaseid) {
 	return 1;
 };
 
-yy.DropView = function (params) { return yy.extend(this, params); }
+yy.DropView = function (params) { return Object.assign(this, params); }
 yy.DropView.prototype.toString = function() {
 	var s = 'DROP'+' '+'VIEW';
 	s += ' '+this.view.toString();

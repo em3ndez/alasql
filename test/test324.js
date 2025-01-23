@@ -19,8 +19,10 @@ describe('Test 324 Roads samples', function () {
 			{id: 2, name: 'Lisa'},
 		]);
 		assert.deepEqual(alasql('SELECT VALUE OBJECT_ID("dbo.Employees")'), 'test324a.Employees');
-		var res = alasql('IF OBJECT_ID("dbo.Employees") IS NOT NULL\
-      DROP TABLE dbo.Employees;');
+		var res = alasql(
+			'IF OBJECT_ID("dbo.Employees") IS NOT NULL\
+      DROP TABLE dbo.Employees;'
+		);
 		assert(!alasql.databases.dbo.tables.Employees);
 		assert.deepEqual(res, 1);
 		done();
@@ -57,9 +59,9 @@ describe('Test 324 Roads samples', function () {
 	it.skip('4. INSERT INTO table with constraints', function (done) {
 		var res = alasql(function () {
 			/*
-      INSERT INTO dbo.Employees(empid, mgrid, empname, salary) VALUES
-        (1,  NULL, 'David'  , 10000.00),
-        (2,  1,    'Eitan'  ,  7000.00)
+	  INSERT INTO dbo.Employees(empid, mgrid, empname, salary) VALUES
+		(1,  NULL, 'David'  , 10000.00),
+		(2,  1,    'Eitan'  ,  7000.00)
   */
 		});
 		assert(res == 2);
@@ -74,10 +76,10 @@ describe('Test 324 Roads samples', function () {
 		assert.throws(function () {
 			var res = alasql(function () {
 				/*
-        INSERT INTO dbo.Employees(empid, mgrid, empname, salary) VALUES
-          (1,  NULL, 'David'  , 10000.00),
-          (2,  1,    'Eitan'  ,  7000.00)
-      */
+		INSERT INTO dbo.Employees(empid, mgrid, empname, salary) VALUES
+		  (1,  NULL, 'David'  , 10000.00),
+		  (2,  1,    'Eitan'  ,  7000.00)
+	  */
 			});
 		}, Error);
 		done();
@@ -87,9 +89,9 @@ describe('Test 324 Roads samples', function () {
 		assert.throws(function () {
 			var res = alasql(function () {
 				/*
-        INSERT INTO dbo.Employees(empid, mgrid, empname, salary) VALUES
-          (NULL,  3, 'Samson'  , 45000.00)
-      */
+		INSERT INTO dbo.Employees(empid, mgrid, empname, salary) VALUES
+		  (NULL,  3, 'Samson'  , 45000.00)
+	  */
 			});
 		}, Error);
 		done();

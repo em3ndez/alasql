@@ -11,28 +11,22 @@
 
 // CREATE DATABASE databaseid
 yy.CreateDatabase = function (params) {
-	return yy.extend(this, params);
+	return Object.assign(this, params);
 };
 yy.CreateDatabase.prototype.toString = function () {
-	var s = 'CREATE';
-	if (this.engineid) s += ' ' + this.engineid;
-	s += ' DATABASE';
-	if (this.ifnotexists) s += ' IF NOT EXISTS';
-	s += ' ' + this.databaseid;
+	let s = 'CREATE '; // Ensure there's a space after CREATE
+	if (this.engineid) s += `${this.engineid} `;
+	s += 'DATABASE ';
+	if (this.ifnotexists) s += 'IF NOT EXISTS ';
+	s += `${this.databaseid} `;
+
 	if (this.args && this.args.length > 0) {
-		s +=
-			'(' +
-			this.args
-				.map(function (arg) {
-					return arg.toString();
-				})
-				.join(', ') +
-			')';
+		s += `(${this.args.map(arg => arg.toString()).join(', ')}) `;
 	}
-	if (this.as) s += ' AS ' + this.as;
+	if (this.as) s += `AS ${this.as}`;
 	return s;
 };
-//yy.CreateDatabase.prototype.compile = returnUndefined;
+
 yy.CreateDatabase.prototype.execute = function (databaseid, params, cb) {
 	var args;
 	if (this.args && this.args.length > 0) {
@@ -64,28 +58,24 @@ yy.CreateDatabase.prototype.execute = function (databaseid, params, cb) {
 
 // CREATE DATABASE databaseid
 yy.AttachDatabase = function (params) {
-	return yy.extend(this, params);
+	return Object.assign(this, params);
 };
 yy.AttachDatabase.prototype.toString = function (args) {
-	var s = 'ATTACH';
-	if (this.engineid) s += ' ' + this.engineid;
-	s += ' DATABASE' + ' ' + this.databaseid;
+	let s = 'ATTACH';
+	if (this.engineid) s += ` ${this.engineid}`;
+	s += ` DATABASE ${this.databaseid}`;
 	// TODO add params
 	if (args) {
 		s += '(';
 		if (args.length > 0) {
-			s += args
-				.map(function (arg) {
-					return arg.toString();
-				})
-				.join(', ');
+			s += args.map(arg => arg.toString()).join(', ');
 		}
 		s += ')';
 	}
-	if (this.as) s += ' AS' + ' ' + this.as;
+	if (this.as) s += ` AS ${this.as}`;
 	return s;
 };
-//yy.CreateDatabase.prototype.compile = returnUndefined;
+
 yy.AttachDatabase.prototype.execute = function (databaseid, params, cb) {
 	if (!alasql.engines[this.engineid]) {
 		throw new Error('Engine "' + this.engineid + '" is not defined.');
@@ -102,7 +92,7 @@ yy.AttachDatabase.prototype.execute = function (databaseid, params, cb) {
 
 // CREATE DATABASE databaseid
 yy.DetachDatabase = function (params) {
-	return yy.extend(this, params);
+	return Object.assign(this, params);
 };
 yy.DetachDatabase.prototype.toString = function () {
 	var s = 'DETACH';
@@ -156,14 +146,12 @@ yy.DetachDatabase.prototype.execute = function (databaseid, params, cb) {
 	}
 	if (cb) cb(res);
 	return res;
-	//	var res = alasql.engines[this.engineid].attachDatabase(this.databaseid, this.as, cb);
-	//	return res;
 };
 
 // USE DATABSE databaseid
 // USE databaseid
 yy.UseDatabase = function (params) {
-	return yy.extend(this, params);
+	return Object.assign(this, params);
 };
 yy.UseDatabase.prototype.toString = function () {
 	return 'USE' + ' ' + 'DATABASE' + ' ' + this.databaseid;
@@ -182,7 +170,7 @@ yy.UseDatabase.prototype.execute = function (databaseid, params, cb) {
 
 // DROP DATABASE databaseid
 yy.DropDatabase = function (params) {
-	return yy.extend(this, params);
+	return Object.assign(this, params);
 };
 yy.DropDatabase.prototype.toString = function () {
 	var s = 'DROP';
@@ -195,22 +183,22 @@ yy.DropDatabase.prototype.execute = function (databaseid, params, cb) {
 	if (this.engineid) {
 		return alasql.engines[this.engineid].dropDatabase(this.databaseid, this.ifexists, cb);
 	}
-	var res;
+	let res;
 
-	var dbid = this.databaseid;
+	const dbid = this.databaseid;
 
 	if (dbid === alasql.DEFAULTDATABASEID) {
 		throw new Error('Drop of default database is prohibited');
 	}
 	if (!alasql.databases[dbid]) {
 		if (!this.ifexists) {
-			throw new Error("Database '" + dbid + "' does not exist");
+			throw new Error(`Database '${dbid}' does not exist`);
 		} else {
 			res = 0;
 		}
 	} else {
 		if (alasql.databases[dbid].engineid) {
-			throw new Error("Cannot drop database '" + dbid + "', because it is attached. Detach it.");
+			throw new Error(`Cannot drop database '${dbid}', because it is attached. Detach it.`);
 		}
 
 		delete alasql.databases[dbid];

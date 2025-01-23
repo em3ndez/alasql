@@ -15,32 +15,32 @@ alasql.parser.parseError = function (str, hash) {
 };
 
 /**
- 	Jison parser
- 	@param {string} sql SQL statement
- 	@return {object} AST (Abstract Syntax Tree)
+	  Jison parser
+	  @param {string} sql SQL statement
+	  @return {object} AST (Abstract Syntax Tree)
 
- 	@todo Create class AST
- 	@todo Add other parsers
+	  @todo Create class AST
+	  @todo Add other parsers
 
- 	@example
- 	alasql.parse = function(sql) {
+	  @example
+	  alasql.parse = function(sql) {
 		// My own parser here
- 	}
+	  }
  */
 alasql.parse = function (sql) {
 	return alasqlparser.parse(alasql.utils.uncomment(sql));
 };
 
 /**
- 	List of engines of external databases
- 	@type {object}
- 	@todo Create collection type
+	  List of engines of external databases
+	  @type {object}
+	  @todo Create collection type
  */
 alasql.engines = {};
 
 /**
- 	List of databases
- 	@type {object}
+	  List of databases
+	  @type {object}
  */
 alasql.databases = {};
 
@@ -51,57 +51,84 @@ alasql.databases = {};
 alasql.databasenum = 0;
 
 /**
- 	Alasql options object
+	  Alasql options object
  */
-alasql.options = {};
-alasql.options.errorlog = false; // Log or throw error
-alasql.options.valueof = false; // Use valueof in orderfn
-alasql.options.dropifnotexists = false; // DROP database in any case
-alasql.options.datetimeformat = 'sql'; // How to handle DATE and DATETIME types
-// Another value is 'javascript'
-alasql.options.casesensitive = true; // Table and column names are case sensitive and converted to lower-case
-alasql.options.logtarget = 'output'; // target for log. Values: 'console', 'output', 'id' of html tag
-alasql.options.logprompt = true; // Print SQL at log
+alasql.options = {
+	/** Log or throw error */
+	errorlog: false,
 
-alasql.options.progress = false; // Callback for async queries progress
+	/** Use valueof in orderfn */
+	valueof: true,
 
-// Default modifier
-// values: RECORDSET, VALUE, ROW, COLUMN, MATRIX, TEXTSTRING, INDEX
-alasql.options.modifier = undefined;
-// How many rows to lookup to define columns
-alasql.options.columnlookup = 10;
-// Create vertex if not found
-alasql.options.autovertex = true;
+	/** DROP database in any case */
+	dropifnotexists: false,
 
-// Use dbo as current database (for partial T-SQL comaptibility)
-alasql.options.usedbo = true;
+	/** How to handle DATE and DATETIME types */
+	datetimeformat: 'sql',
 
-// AUTOCOMMIT ON | OFF
-alasql.options.autocommit = true;
+	/** Table and column names are case sensitive and converted to lower-case */
+	casesensitive: true,
 
-// Use cache
-alasql.options.cache = true;
+	/** target for log. Values: 'console', 'output', 'id' of html tag */
+	logtarget: 'output',
 
-// Compatibility flags
-alasql.options.tsql = true;
+	/** Print SQL at log */
+	logprompt: true,
 
-alasql.options.mysql = true;
+	/** Callback for async queries progress */
+	progress: false,
 
-alasql.options.postgres = true;
+	/**
+	 * Default modifier
+	 * values: RECORDSET, VALUE, ROW, COLUMN, MATRIX, TEXTSTRING, INDEX
+	 * @type {'RECORDSET'|'VALUE'|'ROW'|'COLUMN'|'MATRIX'|'TEXTSTRING'|'INDEX'|undefined}
+	 */
+	modifier: undefined,
 
-alasql.options.oracle = true;
+	/** How many rows to lookup to define columns */
+	columnlookup: 10,
 
-alasql.options.sqlite = true;
+	/** Create vertex if not found */
+	autovertex: true,
 
-alasql.options.orientdb = true;
+	/** Use dbo as current database (for partial T-SQL comaptibility) */
+	usedbo: true,
 
-// for SET NOCOUNT OFF
-alasql.options.nocount = false;
+	/** AUTOCOMMIT ON | OFF */
+	autocommit: true,
 
-// Check for NaN and convert it to undefined
-alasql.options.nan = false;
+	/** Use cache */
+	cache: true,
 
-alasql.options.joinstar = 'overwrite'; // Option for SELECT * FROM a,b
+	/** Compatibility flags */
+	tsql: true,
+
+	mysql: true,
+
+	postgres: true,
+
+	oracle: true,
+
+	sqlite: true,
+
+	orientdb: true,
+
+	/** for SET NOCOUNT OFF */
+	nocount: false,
+
+	/** Check for NaN and convert it to undefined */
+	nan: false,
+
+	excel: {cellDates: true},
+
+	/** Option for SELECT * FROM a,b */
+	joinstar: 'overwrite',
+
+	loopbreak: 100000,
+
+	/** Whether GETDATE() and NOW() return dates as string. If false, then a Date object is returned */
+	dateAsString: true,
+};
 
 //alasql.options.worker = false;
 
@@ -149,17 +176,18 @@ alasql.use = function (databaseid) {
 	if (!databaseid) {
 		databaseid = alasql.DEFAULTDATABASEID;
 	}
+
 	if (alasql.useid === databaseid) {
 		return;
 	}
+
 	if (alasql.databases[databaseid] !== undefined) {
 		alasql.useid = databaseid;
-		var db = alasql.databases[alasql.useid];
+		let db = alasql.databases[alasql.useid];
 		alasql.tables = db.tables;
-		//	alasql.fn = db.fn;
 		db.resetSqlCache();
 		if (alasql.options.usedbo) {
-			alasql.databases.dbo = db; // Operator???
+			alasql.databases.dbo = db;
 		}
 	} else {
 		throw Error('Database does not exist: ' + databaseid);
@@ -199,7 +227,9 @@ alasql.exec = function (sql, params, cb, scope) {
 	}
 
 	delete alasql.error;
+
 	params = params || {};
+
 	if (alasql.options.errorlog) {
 		try {
 			return alasql.dexec(alasql.useid, sql, params, cb, scope);
@@ -215,6 +245,23 @@ alasql.exec = function (sql, params, cb, scope) {
 };
 
 /**
+ * Clears any unneeded properties from a given AST statement closure used for caching
+ * @param {Object} statement the statement to cleanup
+ */
+function cleanupCache(statement) {
+	if (!statement) {
+		return;
+	}
+	if (!alasql.options.cache) {
+		return;
+	}
+	// cleanup the table data to prevent storing this information in the SQL cache
+	if (statement && statement.query && statement.query.data) {
+		statement.query.data = [];
+	}
+}
+
+/**
  Run SQL statement on specific database
  */
 alasql.dexec = function (databaseid, sql, params, cb, scope) {
@@ -222,25 +269,40 @@ alasql.dexec = function (databaseid, sql, params, cb, scope) {
 	//	if(db.databaseid != databaseid) console.trace('got!');
 	//	console.log(3,db.databaseid,databaseid);
 
-	var hh;
+	var hh = hash(sql);
+
 	// Create hash
 	if (alasql.options.cache) {
-		hh = hash(sql);
-		var statement = db.sqlCache[hh];
+		let statement = db.sqlCache[hh];
 		// If database structure was not changed since last time return cache
 		if (statement && db.dbversion === statement.dbversion) {
-			return statement(params, cb);
+			var res = statement(params, cb);
+			cleanupCache(statement);
+			return res;
 		}
 	}
 
-	// Create AST
-	var ast = alasql.parse(sql);
+	let ast = db.astCache[hh];
+	if (alasql.options.cache && !ast) {
+		// Create AST cache
+		ast = alasql.parse(sql);
+		if (ast) {
+			// add to AST cache
+			db.astCache[hh] = ast;
+		}
+	} else {
+		ast = alasql.parse(sql);
+	}
+
 	if (!ast.statements) {
 		return;
 	}
+
 	if (0 === ast.statements.length) {
 		return 0;
-	} else if (1 === ast.statements.length) {
+	}
+
+	if (1 === ast.statements.length) {
 		if (ast.statements[0].compile) {
 			// Compile and Execute
 			var statement = ast.statements[0].compile(databaseid, params);
@@ -259,21 +321,20 @@ alasql.dexec = function (databaseid, sql, params, cb, scope) {
 				db.sqlCache[hh] = statement;
 			}
 			var res = (alasql.res = statement(params, cb, scope));
-			return res;
-		} else {
-			//			console.log(ast.statements[0]);
-			alasql.precompile(ast.statements[0], alasql.useid, params);
-			var res = (alasql.res = ast.statements[0].execute(databaseid, params, cb, scope));
+			cleanupCache(statement);
 			return res;
 		}
-	} else {
-		// Multiple statements
-		if (cb) {
-			alasql.adrun(databaseid, ast, params, cb, scope);
-		} else {
-			return alasql.drun(databaseid, ast, params, cb, scope);
-		}
+		alasql.precompile(ast.statements[0], alasql.useid, params);
+		var res = (alasql.res = ast.statements[0].execute(databaseid, params, cb, scope));
+		return res;
 	}
+
+	if (cb) {
+		alasql.adrun(databaseid, ast, params, cb, scope);
+		return;
+	}
+
+	return alasql.drun(databaseid, ast, params, cb, scope);
 };
 
 /**
@@ -332,28 +393,30 @@ alasql.adrun = function (databaseid, ast, params, cb, scope) {
 		if (data !== undefined) {
 			res.push(data);
 		}
+
 		var astatement = ast.statements.shift();
 		if (!astatement) {
 			if (useid !== databaseid) {
 				alasql.use(useid);
 			}
 			cb(res);
-			//			alasql.busy--;
-			//			if(alasql.busy<0) alasql.busy = 0;
-		} else {
-			if (astatement.compile) {
-				var statement = astatement.compile(alasql.useid);
-				statement(params, adrunone, scope);
-				if (alasql.options.progress !== false) {
-					alasql.options.progress(noqueries, idx++);
-				}
-			} else {
-				alasql.precompile(ast.statements[0], alasql.useid, params);
-				astatement.execute(alasql.useid, params, adrunone);
-				if (alasql.options.progress !== false) {
-					alasql.options.progress(noqueries, idx++);
-				}
+			return;
+		}
+
+		if (astatement.compile) {
+			var statement = astatement.compile(alasql.useid);
+			statement(params, adrunone, scope);
+			if (alasql.options.progress !== false) {
+				alasql.options.progress(noqueries, idx++);
 			}
+			return;
+		}
+
+		alasql.precompile(ast.statements[0], alasql.useid, params);
+		astatement.execute(alasql.useid, params, adrunone);
+
+		if (alasql.options.progress !== false) {
+			alasql.options.progress(noqueries, idx++);
 		}
 	}
 
@@ -369,177 +432,24 @@ alasql.adrun = function (databaseid, ast, params, cb, scope) {
 alasql.compile = function (sql, databaseid) {
 	databaseid = databaseid || alasql.useid;
 
-	var ast = alasql.parse(sql); // Create AST
+	let ast = alasql.parse(sql); // Create AST
 
-	if (1 === ast.statements.length) {
-		var statement = ast.statements[0].compile(databaseid);
-		statement.promise = function (params) {
-			return new Promise(function (resolve, reject) {
-				statement(params, function (data, err) {
-					if (err) {
-						reject(err);
-					} else {
-						resolve(data);
-					}
-				});
-			});
-		};
-
-		return statement;
-		/*/*
-		if(kind == 'value') {
-			return function(params,cb) {
-				var res = statementfn(params);
-				var key = Object.keys(res[0])[0];
-				if(cb) cb(res[0][key]);
-				return res[0][key];
-			};
-		} else  if(kind == 'single') {
-			return function(params,cb) {
-				var res = statementfn(params);
-				if(cb) cb(res[0]);
-				return res[0];
-			}
-		} else  if(kind == 'row') {
-			return function(params,cb) {
-				var res = statementfn(params,cb);
-				var a = [];
-				for(var key in res[0]) {
-					a.push(res[0][key]);
-				};
-				if(cb) cb(a);
-				return a;
-			}
-		} else  if(kind == 'column') {
-			return function(params,cb) {
-				var res = statementfn(params,cb);
-				var ar = [];
-				var key = Object.keys(res)[0];
-				for(var i=0, ilen=res.length; i<ilen; i++){
-					ar.push(res[i][key]);
-				}
-				if(cb) cb(ar);
-				return ar;
-			}
-		} else if(kind == 'array') {
-			return function(params,cb) {
-				var res = statementfn(params,cb);
-				res = flatArray(res);
-				if(cb) cb(res);
-				return res;
-			};
-		} else if(kind == 'matrix') {
-			return function(params,cb) {
-				var res = statementfn(params,cb);
-				res = arrayOfArrays(res);
-				if(cb) cb(res);
-				return res;
-			};
-		} else if(kind == 'collection') {
-			return statementfn;
-		} else {
-			return statementfn;
-		}
-*/
-	} else {
+	if (1 !== ast.statements.length)
 		throw new Error('Cannot compile, because number of statements in SQL is not equal to 1');
-	}
-};
 
-/*/*
-// // Default methods to exec SQL statements
-// alasql.run = alasql.exec = function (sql, params, cb) {
-// 	return this.currentDatabase.exec(sql, params, cb);
-// };
+	var statement = ast.statements[0].compile(databaseid);
 
-// Promised version of exec
-// alasql.aexec = function (sql, params) {
-// 	var self = this;
-// 	return new Promise(function(resolve, reject){
-// 		self.exec(sql,params,resolve);
-// 	});
-// };
-*/
-
-/*/*
-// MSSQL-Like aliases
-alasql.query = function (sql, params, cb) {
-	var res = this.exec(sql, params);
-	if(cb) cb(res);
-	return res;
-};
-
-alasql.queryArray = function (sql, params, cb) {
-	var res = flatArray(this.exec(sql, params));
-	if(cb) cb(res);
-	return res;
-};
-
-alasql.querySingle = function (sql, params, cb) {
-	var res = this.exec(sql, params)[0];
-	if(cb) cb(res);
-	return res;
-};
-
-alasql.queryRow = function (sql, params, cb) {
-	var res = this.querySingle(sql, params);
-	var a = [];
-	for(var key in res) {
-		a.push(res[key]);
+	statement.promise = function (params) {
+		return new Promise(function (resolve, reject) {
+			statement(params, function (data, err) {
+				if (err) {
+					reject(err);
+				} else {
+					resolve(data);
+				}
+			});
+		});
 	};
-	if(cb) cb(a);
-	return a;
-};
 
-alasql.queryValue = function (sql, params, cb) {
-	var res = this.exec(sql, params)[0];
-	var val = res[Object.keys(res)[0]];
-	if(cb) cb(val);
-	return val;
-	// TODO Refactor to query.columns
+	return statement;
 };
-
-alasql.queryArrayOfArrays = function (sql, params, cb) {
-	var res = this.exec(sql, params);
-	var keys = Object.keys(res[0]);
-	var klen = keys.length;
-	var aa = [];
-	for(var i=0, ilen=res.length;i<ilen;i++) {
-		var r = res[i];
-		var a = [];
-		for(var k=0; k<klen;k++){
-			a.push(r[keys[k]]);
-		}
-		aa.push(a);
-	}
-
-	if(cb) cb(aa);
-	return aa;
-};
-*/
-/*/*alasql.queryColumn = function (sql, params, cb) {
-	var res = this.exec(sql, params);
-	var keys = Object.keys(res[0]);
-	var klen = keys.length;
-	var aa = [];
-	for(var i=0, ilen=res.length;i<ilen;i++) {
-		var r = res[i];
-		var a = [];
-		for(var k=0; k<klen;k++){
-			a.push(r[keys[k]]);
-		}
-		aa.push(a);
-	}
-
-	if(cb) cb(aa);
-	return aa;
-};
-*/
-/*/*
-alasql.value = alasql.queryValue;
-alasql.single = alasql.querySingle;
-alasql.row = alasql.queryRow;
-alasql.column = alasql.queryArray;
-alasql.array = alasql.queryArray;
-alasql.matrix = alasql.queryArrayOfArrays;
-*/

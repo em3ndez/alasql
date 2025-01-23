@@ -11,34 +11,29 @@
 /**
  @class Query Main query class
  */
-var Query = (alasql.Query = function (params) {
-	this.alasql = alasql;
-	//	console.log(12,alasql);
-	// Columns
-	this.columns = [];
-	this.xcolumns = {};
-	this.selectGroup = [];
-	this.groupColumns = {};
-	// Data array
-	extend(this, params);
-});
+class Query {
+	constructor(params) {
+		this.alasql = alasql;
+		//	console.log(12,alasql);
+		// Columns
+		this.columns = [];
+		this.xcolumns = {};
+		this.selectGroup = [];
+		this.groupColumns = {};
+		// Data array
+		Object.assign(this, params);
+	}
+}
 
 /**
  @class Recordset data object
  */
-var Recordset = (alasql.Recordset = function (params) {
-	// Data array
-	extend(this, params);
-});
+class Recordset {
+	constructor(params) {
+		// Data array
+		Object.assign(this, params);
+	}
+}
 
-/*/*
-// View = function(){
-// 	this.data = [];
-// 	this.columns = [];
-// 	this.ixcolumns = {};
-// 	this.ixdefs = {};
-// 	this.indices = {};
-// };
-
-// alasql.View = View;
-*/
+alasql.Recordset = Recordset;
+alasql.Query = Query;

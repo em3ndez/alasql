@@ -7,12 +7,12 @@
 */
 
 yy.FuncValue = function (params) {
-	return yy.extend(this, params);
+	return Object.assign(this, params);
 };
 
-var re_invalidFnNameChars = /[^0-9A-Z_$]+/i;
-yy.FuncValue.prototype.toString = function (dontas) {
-	var s = '';
+let re_invalidFnNameChars = /[^0-9A-Z_$]+/i;
+yy.FuncValue.prototype.toString = function () {
+	let s = '';
 
 	if (alasql.fn[this.funcid]) s += this.funcid;
 	else if (alasql.aggr[this.funcid]) s += this.funcid;
@@ -30,37 +30,18 @@ yy.FuncValue.prototype.toString = function (dontas) {
 		}
 		s += ')';
 	}
-
-	if (this.as && !dontas) s += ' AS ' + this.as.toString();
-	//	if(this.alias) s += ' AS '+this.alias;
 	return s;
 };
 
 yy.FuncValue.prototype.execute = function (databaseid, params, cb) {
-	var res = 1;
+	let res = 1;
 	alasql.precompile(this, databaseid, params); // Precompile queries
 	//	console.log(34,this.toJS('','',null));
-	var expr = new Function('params,alasql', 'var y;return ' + this.toJS('', '', null));
+	let expr = new Function('params,alasql', 'var y;return ' + this.toJS('', '', null));
 	expr(params, alasql);
 	if (cb) res = cb(res);
 	return res;
 };
-
-/*/*
-//yy.FuncValue.prototype.compile = function(context, tableid, defcols){
-//	console.log('Expression',this);
-//	if(this.reduced) return returnTrue();
-//	return new Function('p','var y;return '+this.toJS(context, tableid, defcols));
-//};
-
-
-// yy.FuncValue.prototype.compile = function(context, tableid, defcols){
-// //	console.log('Expression',this);
-// 	if(this.reduced) return returnTrue();
-// 	return new Function('p','var y;return '+this.toJS(context, tableid, defcols));
-// };
-
-*/
 
 yy.FuncValue.prototype.findAggregator = function (query) {
 	if (this.args && this.args.length > 0) {
@@ -88,7 +69,6 @@ yy.FuncValue.prototype.toJS = function (context, tableid, defcols) {
 	} else if (!alasql.fn[funcid] && alasql.stdfn[funcid.toUpperCase()]) {
 		if (this.newid) s += 'new ';
 		s += 'alasql.stdfn[' + JSON.stringify(this.funcid.toUpperCase()) + '](';
-		//		if(this.args) s += this.args.toJS(context, tableid);
 		if (this.args && this.args.length > 0) {
 			s += this.args
 				.map(function (arg) {
@@ -103,7 +83,6 @@ yy.FuncValue.prototype.toJS = function (context, tableid, defcols) {
 		//		var s = '';
 		if (this.newid) s += 'new ';
 		s += 'alasql.fn[' + JSON.stringify(this.funcid) + '](';
-		//		if(this.args) s += this.args.toJS(context, tableid);
 		if (this.args && this.args.length > 0) {
 			s += this.args
 				.map(function (arg) {
@@ -113,25 +92,9 @@ yy.FuncValue.prototype.toJS = function (context, tableid, defcols) {
 		}
 		s += ')';
 	}
-	//console.log('userfn:',s,this);
-
-	//	if(this.alias) s += ' AS '+this.alias;
 	return s;
 };
-
-/*/*
-// // Functions compiler
-// nodes.FunctionValue.prototype.toJS = function (context, tableid) {
-// 	var s = '';
-// 	s += fns[this.name.toUpperCase()].apply(null,this.arguments.map(function(arg){
-// 		if(arg) return arg.toJS(context, tableid);
-// 		else return '';
-// 	}));
-// 	return s;
-// };
-*/
-
-/*/*
+/*
 //
 // SQL FUNCTIONS COMPILERS
 // Based on SQLite functions
@@ -160,17 +123,17 @@ stdlib.EXP = function (a) {
 };
 
 stdlib.IIF = function (a, b, c) {
-	if (arguments.length == 3) {
-		return '((' + a + ')?(' + b + '):(' + c + '))';
+	if (arguments.length === 3) {
+		return `((${a}) ? (${b}) : (${c}))`;
 	} else {
 		throw new Error('Number of arguments of IFF is not equals to 3');
 	}
 };
 stdlib.IFNULL = function (a, b) {
-	return '(' + a + '||' + b + ')';
+	return `((typeof ${a} === "undefined" || ${a} === null) ? ${b} : ${a})`;
 };
 stdlib.INSTR = function (s, p) {
-	return '((' + s + ').indexOf(' + p + ')+1)';
+	return `((${s}).indexOf(${p}) + 1)`;
 };
 
 //stdlib.LEN = stdlib.LENGTH = function(s) {return '('+s+'+"").length';};
@@ -213,10 +176,13 @@ stdlib.MIN = stdlib.LEAST = function () {
 	);
 };
 
-stdlib.SUBSTRING = stdlib.SUBSTR = stdlib.MID = function (a, b, c) {
-	if (arguments.length == 2) return und(a, 'y.substr(' + b + '-1)');
-	else if (arguments.length == 3) return und(a, 'y.substr(' + b + '-1,' + c + ')');
-};
+stdlib.SUBSTRING =
+	stdlib.SUBSTR =
+	stdlib.MID =
+		function (a, b, c) {
+			if (arguments.length == 2) return und(a, 'y.substr(' + b + '-1)');
+			else if (arguments.length == 3) return und(a, 'y.substr(' + b + '-1,' + c + ')');
+		};
 
 stdfn.REGEXP_LIKE = function (a, b, c) {
 	//	console.log(a,b,c);
@@ -275,7 +241,8 @@ stdlib.UPPER = stdlib.UCASE = function (s) {
 // Concatination of strings
 stdfn.CONCAT_WS = function () {
 	var args = Array.prototype.slice.call(arguments);
-	return args.slice(1, args.length).join(args[0]);
+	args = args.filter(x => !(x === null || typeof x === 'undefined'));
+	return args.slice(1, args.length).join(args[0] || '');
 };
 
 //stdlib.UCASE = function(s) {return '('+s+').toUpperCase()';}
@@ -289,7 +256,7 @@ stdfn.CONCAT_WS = function () {
 // TRIM
 
 // Aggregator for joining strings
-alasql.aggr.GROUP_CONCAT = function (v, s, stage) {
+alasql.aggr.group_concat = alasql.aggr.GROUP_CONCAT = function (v, s, stage) {
 	if (stage === 1) {
 		return '' + v;
 	} else if (stage === 2) {
@@ -299,42 +266,39 @@ alasql.aggr.GROUP_CONCAT = function (v, s, stage) {
 	return s;
 };
 
-alasql.aggr.MEDIAN = function (v, s, stage) {
+alasql.aggr.median = alasql.aggr.MEDIAN = function (v, s, stage) {
 	if (stage === 2) {
 		if (v !== null) {
 			s.push(v);
 		}
 		return s;
-	} else if (stage === 1) {
+	}
+
+	if (stage === 1) {
 		if (v === null) {
 			return [];
 		}
 		return [v];
+	}
+
+	if (!s.length) {
+		return null;
+	}
+
+	let r = s.sort((a, b) => {
+		if (a > b) return 1;
+		if (a < b) return -1;
+		return 0;
+	});
+
+	let middle = (r.length + 1) / 2;
+	let middleFloor = middle | 0;
+	let el = r[middleFloor - 1];
+
+	if (middle === middleFloor || (typeof el !== 'number' && !(el instanceof Number))) {
+		return el;
 	} else {
-		if (!s.length) {
-			return s;
-		}
-
-		var r = s.sort(function (a, b) {
-			if (a === b) {
-				return 0;
-			}
-			if (a > b) {
-				return 1;
-			}
-			return -1;
-		});
-		var p = (r.length + 1) / 2;
-		if (Number.isInteger(p)) {
-			return r[p - 1];
-		}
-
-		var value = r[Math.floor(p - 1)];
-		if (typeof value !== 'number' && !(value instanceof Number)) {
-			return value;
-		}
-
-		return (value + r[Math.ceil(p - 1)]) / 2;
+		return (el + r[middleFloor]) / 2;
 	}
 };
 
@@ -345,32 +309,34 @@ alasql.aggr.QUART = function (v, s, stage, nth) {
 			s.push(v);
 		}
 		return s;
-	} else if (stage === 1) {
+	}
+
+	if (stage === 1) {
 		if (v === null) {
 			return [];
 		}
 		return [v];
-	} else {
-		if (!s.length) {
-			return s;
-		}
-
-		nth = !nth ? 1 : nth;
-		var r = s.sort(function (a, b) {
-			if (a === b) {
-				return 0;
-			}
-			if (a > b) {
-				return 1;
-			}
-			return -1;
-		});
-		var p = (nth * (r.length + 1)) / 4;
-		if (Number.isInteger(p)) {
-			return r[p - 1]; //Integer value
-		}
-		return r[Math.floor(p)]; //Math.ceil -1 or Math.floor
 	}
+	if (!s.length) {
+		return s;
+	}
+
+	nth = !nth ? 1 : nth;
+	var r = s.sort(function (a, b) {
+		if (a === b) return 0;
+
+		if (a > b) return 1;
+
+		return -1;
+	});
+
+	let p = (nth * (r.length + 1)) / 4;
+
+	if (Number.isInteger(p)) {
+		return r[p - 1]; //Integer value
+	}
+
+	return r[Math.floor(p)]; //Math.ceil -1 or Math.floor
 };
 
 alasql.aggr.QUART2 = function (v, s, stage) {
@@ -385,26 +351,25 @@ alasql.aggr.QUART3 = function (v, s, stage) {
 // Standard deviation
 alasql.aggr.VAR = function (v, s, stage) {
 	if (stage === 1) {
-		if (v === null) {
-			return {arr: [], sum: 0};
-		}
-		return {arr: [v], sum: v};
+		// Initialise sum, sum of squares, and count
+		return v === null ? {sum: 0, sumSq: 0, count: 0} : {sum: v, sumSq: v * v, count: 1};
 	} else if (stage === 2) {
-		if (v === null) {
-			return s;
+		// Update sum, sum of squares, and count
+		if (v !== null) {
+			s.sum += v;
+			s.sumSq += v * v;
+			s.count++;
 		}
-		s.arr.push(v);
-		s.sum += v;
 		return s;
 	} else {
-		var N = s.arr.length;
-		var avg = s.sum / N;
-		var std = 0;
-		for (var i = 0; i < N; i++) {
-			std += (s.arr[i] - avg) * (s.arr[i] - avg);
+		// Calculate variance using the formula: variance = (sumSq - (sum^2 / count)) / (count - 1)
+		// This avoids the need to store and iterate over all values
+		if (s.count > 1) {
+			return (s.sumSq - (s.sum * s.sum) / s.count) / (s.count - 1);
+		} else {
+			// Handling for cases with less than 2 values (variance is undefined or zero)
+			return 0;
 		}
-		std = std / (N - 1);
-		return std;
 	}
 };
 
@@ -416,51 +381,46 @@ alasql.aggr.STDEV = function (v, s, stage) {
 	}
 };
 
-// Standard deviation
-// alasql.aggr.VARP = function(v,s,acc){
-// 	if(typeof acc.arr == 'undefined') {
-// 		acc.arr = [v];
-// 		acc.sum = v;
-// 	} else {
-// 		acc.arr.push(v);
-// 		acc.sum += v;
-// 	}
-// 	var N = acc.arr.length;
-// 	var avg = acc.sum / N;
-// 	var std = 0;
-// 	for(var i=0;i<N;i++) {
-// 		std += (acc.arr[i]-avg)*(acc.arr[i]-avg);
-// 	}
-// 	std = std/N;
-// 	return std;
-// };
-
-alasql.aggr.VARP = function (v, s, stage) {
-	if (stage == 1) {
-		return {arr: [v], sum: v};
-	} else if (stage == 2) {
-		s.arr.push(v);
-		s.sum += v;
-		return s;
+alasql.aggr.STDEV = function (v, s, stage) {
+	if (stage === 1 || stage === 2) {
+		return alasql.aggr.VAR(v, s, stage);
 	} else {
-		var N = s.arr.length;
-		var avg = s.sum / N;
-		var std = 0;
-		for (var i = 0; i < N; i++) {
-			std += (s.arr[i] - avg) * (s.arr[i] - avg);
+		return Math.sqrt(alasql.aggr.VAR(v, s, stage));
+	}
+};
+
+alasql.aggr.VARP = function (value, accumulator, stage) {
+	if (stage === 1) {
+		// Initialise accumulator with count, sum, and sum of squares
+		return {count: 1, sum: value, sumSq: value * value};
+	} else if (stage === 2) {
+		// Update accumulator
+		accumulator.count++;
+		accumulator.sum += value;
+		accumulator.sumSq += value * value;
+		return accumulator;
+	} else {
+		// Final stage: Calculate variance
+		if (accumulator.count > 0) {
+			const mean = accumulator.sum / accumulator.count;
+			const variance = accumulator.sumSq / accumulator.count - mean * mean;
+			return variance;
+		} else {
+			return 0; // Return 0 variance if no values were aggregated
 		}
-		std = std / N;
-		return std;
 	}
 };
 
-alasql.aggr.STD = alasql.aggr.STDDEV = alasql.aggr.STDEVP = function (v, s, stage) {
-	if (stage == 1 || stage == 2) {
-		return alasql.aggr.VARP(v, s, stage);
-	} else {
-		return Math.sqrt(alasql.aggr.VARP(v, s, stage));
-	}
-};
+alasql.aggr.STD =
+	alasql.aggr.STDDEV =
+	alasql.aggr.STDEVP =
+		function (v, s, stage) {
+			if (stage == 1 || stage == 2) {
+				return alasql.aggr.VARP(v, s, stage);
+			} else {
+				return Math.sqrt(alasql.aggr.VARP(v, s, stage));
+			}
+		};
 
 alasql._aggrOriginal = alasql.aggr;
 alasql.aggr = {};
@@ -482,31 +442,34 @@ for (var i = 0; i < 256; i++) {
 	lut[i] = (i < 16 ? '0' : '') + i.toString(16);
 }
 
-stdfn.NEWID = stdfn.UUID = stdfn.GEN_RANDOM_UUID = function () {
-	var d0 = (Math.random() * 0xffffffff) | 0;
-	var d1 = (Math.random() * 0xffffffff) | 0;
-	var d2 = (Math.random() * 0xffffffff) | 0;
-	var d3 = (Math.random() * 0xffffffff) | 0;
-	return (
-		lut[d0 & 0xff] +
-		lut[(d0 >> 8) & 0xff] +
-		lut[(d0 >> 16) & 0xff] +
-		lut[(d0 >> 24) & 0xff] +
-		'-' +
-		lut[d1 & 0xff] +
-		lut[(d1 >> 8) & 0xff] +
-		'-' +
-		lut[((d1 >> 16) & 0x0f) | 0x40] +
-		lut[(d1 >> 24) & 0xff] +
-		'-' +
-		lut[(d2 & 0x3f) | 0x80] +
-		lut[(d2 >> 8) & 0xff] +
-		'-' +
-		lut[(d2 >> 16) & 0xff] +
-		lut[(d2 >> 24) & 0xff] +
-		lut[d3 & 0xff] +
-		lut[(d3 >> 8) & 0xff] +
-		lut[(d3 >> 16) & 0xff] +
-		lut[(d3 >> 24) & 0xff]
-	);
-};
+stdfn.NEWID =
+	stdfn.UUID =
+	stdfn.GEN_RANDOM_UUID =
+		function () {
+			var d0 = (Math.random() * 0xffffffff) | 0;
+			var d1 = (Math.random() * 0xffffffff) | 0;
+			var d2 = (Math.random() * 0xffffffff) | 0;
+			var d3 = (Math.random() * 0xffffffff) | 0;
+			return (
+				lut[d0 & 0xff] +
+				lut[(d0 >> 8) & 0xff] +
+				lut[(d0 >> 16) & 0xff] +
+				lut[(d0 >> 24) & 0xff] +
+				'-' +
+				lut[d1 & 0xff] +
+				lut[(d1 >> 8) & 0xff] +
+				'-' +
+				lut[((d1 >> 16) & 0x0f) | 0x40] +
+				lut[(d1 >> 24) & 0xff] +
+				'-' +
+				lut[(d2 & 0x3f) | 0x80] +
+				lut[(d2 >> 8) & 0xff] +
+				'-' +
+				lut[(d2 >> 16) & 0xff] +
+				lut[(d2 >> 24) & 0xff] +
+				lut[d3 & 0xff] +
+				lut[(d3 >> 8) & 0xff] +
+				lut[(d3 >> 16) & 0xff] +
+				lut[(d3 >> 24) & 0xff]
+			);
+		};

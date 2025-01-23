@@ -79,7 +79,9 @@ var saveAs =
 						blob.type
 					)
 				) {
-					return new Blob([String.fromCharCode(0xfeff), blob], {type: blob.type});
+					return new Blob([String.fromCharCode(0xfeff), blob], {
+						type: blob.type,
+					});
 				}
 				return blob;
 			},
@@ -169,7 +171,14 @@ var saveAs =
 		FS_proto.WRITING = 1;
 		FS_proto.DONE = 2;
 
-		FS_proto.error = FS_proto.onwritestart = FS_proto.onprogress = FS_proto.onwrite = FS_proto.onabort = FS_proto.onerror = FS_proto.onwriteend = null;
+		FS_proto.error =
+			FS_proto.onwritestart =
+			FS_proto.onprogress =
+			FS_proto.onwrite =
+			FS_proto.onabort =
+			FS_proto.onerror =
+			FS_proto.onwriteend =
+				null;
 
 		return saveAs;
 	})(
